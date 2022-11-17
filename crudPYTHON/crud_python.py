@@ -11,6 +11,35 @@ from sqlalchemy import create_engine
 from datetime import datetime
 from sqlalchemy.sql.expression import null
 
+import flask
+from IPython import get_ipython
+
+"""Conexão REST API"""
+
+!pip install flask
+
+!wget https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip
+!unzip -o ngrok-stable-linux-amd64.zip
+
+get_ipython().system_raw('python app.py &')
+get_ipython().system_raw('./ngrok http 5000 &')
+
+! curl -s http://localhost:4040/api/tunnels | python3 -c \
+    "import sys, json; print(json.load(sys.stdin)['tunnels'][0]['public_url'])"
+
+from flask import Flask
+app = Flask(__name__)
+
+
+@app.route('/')
+def index():
+    return "Welcome to Golab REST API"
+
+if __name__ == '__main__':
+    app.run()
+
+"""Craição do objeto contato e conexões"""
+
 class Contato:
     def __init__(self, rowid: int, nome: str, idade: int, datacadastro: str):
       self.rowid = int(rowid)
@@ -37,20 +66,31 @@ def CRUDcreate(Contato: Contato):
   my_conn.execute("INSERT INTO contatos VALUES ('"+auxNome+"', "+auxIdade+", '"+auxDatacadastro+"')")
 
 # Return - SELECT
-def CRUDreturn():
+def CRUDreturn(operacaoExtra = False):
   r_set=my_conn.execute("SELECT rowid, nome, idade, datacadastro FROM contatos")
 
   contatos = []
+
+  #Armazena os Rowid que existem na tabela
+  rowidExistente = []
   for row in r_set:
     auxRowid = row[0]
+    rowidExistente.append(auxRowid)
+
     auxNome = row[1]
     auxIdade = row[2]
     auxDatacadastro = row[3]
     contatos.append(Contato(auxRowid, auxNome, auxIdade, auxDatacadastro))
     #print(Contato(auxRowid, auxNome, auxIdade, auxDatacadastro))
 
-  for contato in contatos:
-    print(contato)
+  #Variavel operacaoExtra criada
+  #Se a operação pedida for Return imprime os retornos
+  #Se a operação pedida for Update utilizamos a variavel auxRowid internamente
+  if(operacaoExtra == False):
+    for contato in contatos:
+      print(contato)
+  else:
+    return rowidExistente
 
 #Update - UPDATE
 def CRUDupdate(Contato: Contato, rowid: str):
@@ -62,30 +102,55 @@ def CRUDupdate(Contato: Contato, rowid: str):
   auxIdade = str(Contato.idade)
   auxDatacadastro = Contato.datacadastro
 
-  my_conn.execute("UPDATE contatos SET nome= '"+auxNome
-        +"', idade= "+auxIdade
-        +", datacadastro= '"+auxDatacadastro
-        +"' WHERE rowid= "+ rowid)
+  rowidExistente = CRUDreturn(operacaoExtra=True)
+  temRowid = False
+  for rowidE in rowidExistente:
+    if(int(rowid) == int(rowidE)):
+      temRowid = True
+      break
+
+  if(temRowid == True):
+    my_conn.execute("UPDATE contatos SET nome= '"+auxNome
+          +"', idade= "+auxIdade
+          +", datacadastro= '"+auxDatacadastro
+          +"' WHERE rowid= "+ rowid)
+  else:
+    print("Rowid não encontrado")
 
 #Delete - DELETE
 def CRUDdelete(rowid: int):
-  my_conn.execute("DELETE FROM contatos WHERE rowid= "+str(rowid))
+  rowidExistente = CRUDreturn(operacaoExtra=True)
+  temRowid = False
+  for rowidE in rowidExistente:
+    if(int(rowid) == int(rowidE)):
+      temRowid = True
+      break
+  
+  if(temRowid == True):
+    my_conn.execute("DELETE FROM contatos WHERE rowid= "+str(rowid))
+  else:
+    print("Rowid não encontrado")
+
+def criarContato():
+
+  nome = str(input("Nome: "))
+  idade = int(input("Idade: "))
+  datacadastro = str(datetime.today().strftime('%Y-%m-%d %H:%M:%S'))
+
+  #valor rowid usado para criação dos contatos
+  #deletado internamente nas funções
+  rowidTemp = 0
+
+  contato = Contato(rowidTemp, nome, idade, datacadastro)
+
+  return contato
 
 """Main"""
 
 operacao = input("Insira a operação desejada C,R,U ou D: ")
 
-
-nome = 'Siclaninha'
-idade = 18
-datacadastro = str(datetime.today().strftime('%Y-%m-%d %H:%M:%S'))
-
-#valor rowid usado para criação dos contatos
-#deletado internamente nas funções
-rowidTemp = 0
-
 if(operacao == 'c'):
-  CRUDcreate(Contato(rowidTemp, nome, idade, datacadastro))
+  CRUDcreate(criarContato())
 
 else:
   if(operacao == 'r'):
@@ -94,7 +159,7 @@ else:
   else:
     if(operacao == 'u'):
       rowid = int(input("Insira o rowid a ser atualizado: "))
-      CRUDupdate(Contato(rowidTemp, nome, idade, datacadastro), str(rowid))
+      CRUDupdate(criarContato(), str(rowid))
 
     else:
       if(operacao == 'd'):
