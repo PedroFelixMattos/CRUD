@@ -17,27 +17,20 @@ public class Main {
 		Scanner entrada = new  Scanner(System.in);
 		char operacao = entrada.next().charAt(0); 
 		
-		
-		DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-		LocalDateTime now = LocalDateTime.now();
 		ContatoDAO contatoDAO = new ContatoDAO();
 		if(operacao == 'c') {	
 			Contato contatoC = new Contato();
-	
-			contatoC.setNome("Joaquina Leopoldina");
-			contatoC.setIdade(31);
-			contatoC.setDataCadastro(dtf.format(now));
-			
+			contatoC.adicionarValores();
+
 			contatoDAO.save(contatoC);
 		}else if (operacao == 'u') {
-			//Atualizar o contato
+			//Atualizar o contatoc
 			Contato contatoU = new Contato();
-			contatoU.setNome("João Silva das Cruzes");
-			contatoU.setIdade(58);
-			contatoU.setDataCadastro(dtf.format(now));
+			contatoU.adicionarValores();
+			
 			System.out.print("Escolha o id que deseja atualizar: ");
-			Scanner entradaAdicao = new  Scanner(System.in);
-			int adicao = Integer.parseInt(entradaAdicao.next());
+			Scanner entradaUpdate = new  Scanner(System.in);
+			int adicao = entradaUpdate.nextInt();
 			contatoU.setId(adicao); // é o numero que está no banco de dados da PK
 
 			contatoDAO.update(contatoU);
@@ -50,7 +43,8 @@ public class Main {
 		}else if(operacao == 'r') {
 			//Visualização dos registros do banco de dados TODOS
 			for(Contato contatoR : contatoDAO.getContatos()) {
-				System.out.println("Contato: "+contatoR.getNome()+
+				System.out.println("ID: "+contatoR.getId()+
+						", Contato: "+contatoR.getNome()+
 						", Idade: "+contatoR.getIdade()+
 						", Data de Cadastro: "+contatoR.getDataCadastro());
 			}

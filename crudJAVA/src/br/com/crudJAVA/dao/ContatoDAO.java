@@ -76,11 +76,24 @@ public class ContatoDAO {
 			//QUal o ID do registro que deseja atualizar?
 			final int auxId = contato.getId();
 			
+			//Verifica se o ID a ser atualizado esta presente no Banco de Dados
+			boolean temRowid = false;
+			for(Contato contatoR : this.getContatos()) {
+				if(contatoR.getId() == auxId){
+					temRowid = true;
+					break;
+				}
+			}
+			
 			//Executar a query
-			String sql = "UPDATE contatos SET nome = '"+auxNome+"', idade = "+auxIdade+", datacadastro = '"+auxDatacadastro+"' "+
-					"WHERE rowid = "+auxId;
-			//System.out.print(sql);
-			statement.executeUpdate(sql);
+			if(temRowid == true) {
+				String sql = "UPDATE contatos SET nome = '"+auxNome+"', idade = "+auxIdade+", datacadastro = '"+auxDatacadastro+"' "+
+						"WHERE rowid = "+auxId;
+				//System.out.print(sql);
+				statement.executeUpdate(sql);
+			}else {
+				System.out.print("ID não encontrado");
+			}
 		}catch (Exception e) {
 			e.printStackTrace();
 		}finally {
@@ -108,12 +121,25 @@ public class ContatoDAO {
 			
 			//Criar a classe para executar a query
 			statement = conn.createStatement();
-				
-			//Executar a query
-			String sql = "DELETE FROM contatos WHERE rowid = "+id;
-			//System.out.print(sql);
-			statement.executeUpdate(sql);
 			
+			//Verifica se o ID a ser atualizado esta presente no Banco de Dados
+			boolean temRowid = false;
+			for(Contato contatoR : this.getContatos()) {
+				if(contatoR.getId() == id){
+					temRowid = true;
+					break;
+				}
+			}
+			
+			//Executar a query
+			if(temRowid == true) {
+				String sql = "DELETE FROM contatos WHERE rowid = "+id;
+				//System.out.print(sql);
+				statement.executeUpdate(sql);
+			}else {
+				System.out.print("ID não encontrado");
+			}
+				
 		}catch (Exception e) {
 			e.printStackTrace();
 		}finally {
